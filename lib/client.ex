@@ -66,7 +66,9 @@ defmodule Client do
       #Logger.warn("message on topic #{topic}: #{event} #{inspect payload} by client number #{state.num}")
       {:ok, state}
     end
-  
+
+    # FOR EXTERNAL REPLIES< DO SEPCIFIC THINGS
+
     # # def handle_reply("ping", _ref, %{"status" => "ok"} = payload, _transport, state) do
     # #   Logger.info("server pong ##{payload}")
     # #   {:ok, state}
@@ -112,13 +114,13 @@ defmodule Client do
                     tweet_mention(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
 
                 3 ->
-                    queryhashtags(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
+                    queryhashtags(state.num,transport)
 
                 4 ->
-                    query_self_mentions(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
+                    query_self_mentions(state.num,transport)
 
-                5 ->
-                    discon(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
+                # 5 ->
+                #     discon(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
 
                 6 ->
                     rand_susbscribe(state.num,state.total,transport)
@@ -173,16 +175,19 @@ defmodule Client do
             end
         end
     end
-
-    # def queryhashtags(x,servernode) do
-    #     #Pick a random hashtag
-    #     hashtag = "#hashtag" <>Integer.to_string(:rand.uniform(999))
-    #     GenServer.cast({:server,servernode},{:hashtags,x,hashtag})
-    # end
-    # def query_self_mentions(x,servernode) do
-    #     mention = "@user"<>Integer.to_string(x)
-    #     GenServer.cast({:server,servernode},{:mentions,x,mention})
-    # end
+    
+    def queryhashtags(x,transport) do
+        #Pick a random hashtag
+        hashtag = "#hashtag" <>Integer.to_string(:rand.uniform(999))
+        GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "query:hashtag", %{num: x, hashtag: hashtag})
+        #GenServer.cast({:server,servernode},{:hashtags,x,hashtag})
+    end
+    
+    def query_self_mentions(x,transport) do
+        mention = "@user"<>Integer.to_string(x)
+        GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "query:mentions", %{num: x, mention: mention})        
+        #GenServer.cast({:server,servernode},{:mentions,x,mention})
+    end
 
     # def discon(x,servernode)do
     #     #stop all activities, play dead
