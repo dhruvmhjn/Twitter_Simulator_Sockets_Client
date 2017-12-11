@@ -136,7 +136,7 @@ defmodule Client do
                     #querytweets(x)
 
             end
-            Process.sleep (:rand.uniform(100))
+            Process.sleep (:rand.uniform(500))
             IO.puts "client #{state.num} act #{state.tweet_cnt}"
             send self(), :pick_random
         else

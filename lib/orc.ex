@@ -15,6 +15,7 @@ defmodule Orc do
         pids = Enum.map(list, fn(x)-> elem(x,1) end)
         #IO.inspect pids
         #send connect message
+        Process.sleep(1000)
         Enum.map(pids, fn(pid)-> send pid, :connect end)
         {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids}}
     end
