@@ -27,7 +27,7 @@ defmodule Boss do
             # IO.inspect Node.ping(servernode)
             # IO.inspect Node.list
             :global.sync()
-            ClientSupervisor.start_link([numClientsInt,timePeriodInt,servernode]) 
+            ClientSupervisor.start_link([numClientsInt,timePeriodInt,"ddd"]) 
         end
         boss_receiver(numClientsInt,timePeriodInt)
     end

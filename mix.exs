@@ -3,7 +3,7 @@ defmodule Try2.Mixfile do
 
   def project do
     [
-      app: :try2,
+      app: :twitterclient,
       version: "0.1.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,

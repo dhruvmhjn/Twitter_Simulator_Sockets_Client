@@ -1,25 +1,24 @@
-defmodule Try2 do
-    @moduledoc false
+defmodule Client do
     require Logger
     alias Phoenix.Channels.GenSocketClient
     @behaviour GenSocketClient
   
-    def start_link() do
-      GenSocketClient.start_link(
-            __MODULE__,
-            Phoenix.Channels.GenSocketClient.Transport.WebSocketClient,
-            "ws://localhost:4000/socket/websocket"
-          )
+    def start_link(x) do
+        GenSocketClient.start_link(__MODULE__,Phoenix.Channels.GenSocketClient.Transport.WebSocketClient,{x,"ws://192.168.0.5:4000/socket/websocket"})
     end
   
-    def init(url) do
-      {:connect, url, [], %{first_join: true, ping_ref: 1}}
+    def init({x,url}) do
+      {:connect, url, [], %{first_join: true, ping_ref: 1, num: x}}
     end
   
     def handle_connected(transport, state) do
-      Logger.info("connected")
-      GenSocketClient.join(transport, "room:*")
-      {:ok, state}
+        Logger.info("connected")
+        if (rem(state.num,2) == 1) do
+            GenSocketClient.join(transport, "room:trio")
+        else
+            GenSocketClient.join(transport, "room:couple")
+        end
+        {:ok, state}
     end
   
     def handle_disconnected(reason, state) do
@@ -32,7 +31,7 @@ defmodule Try2 do
       Logger.info("joined the topic #{topic}")
   
       if state.first_join do
-        :timer.send_interval(:timer.seconds(1), self(), :ping_server)
+        :timer.send_interval(:timer.seconds(10), self(), :ping_server)
         {:ok, %{state | first_join: false, ping_ref: 1}}
       else
         {:ok, %{state | ping_ref: 1}}
@@ -60,7 +59,7 @@ defmodule Try2 do
       {:ok, state}
     end
     def handle_reply(topic, _ref, payload, _transport, state) do
-      Logger.warn("reply on topic #{topic}: #{inspect payload}")
+      Logger.warn("reply on topic #{topic}: #{inspect payload} by client number #{state.num}")
       {:ok, state}
     end
   
@@ -80,6 +79,13 @@ defmodule Try2 do
       {:ok, state}
     end
     def handle_info(:ping_server, transport, state) do
+        if (rem(state.num,2) == 1) do
+            #GenSocketClient.join(transport, "room:trio")
+            GenSocketClient.push(transport, "room:trio", "message:new", %{ping_ref: 333})
+        else
+            #GenSocketClient.join(transport, "room:couple")
+            GenSocketClient.push(transport, "room:couple", "message:new", %{ping_ref: 222})
+        end
       Logger.info("sending ping ##{state.ping_ref}")
       GenSocketClient.push(transport, "room:*", "message:new", %{ping_ref: state.ping_ref})
       {:ok, %{state | ping_ref: state.ping_ref + 1}}

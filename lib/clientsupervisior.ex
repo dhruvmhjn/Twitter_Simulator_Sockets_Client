@@ -8,7 +8,12 @@ defmodule ClientSupervisor do
     end
     def init({clients,acts,servernode}) do
         n_list = Enum.to_list 1..clients
-        children = Enum.map(n_list, fn(x)->worker(Client, [x,clients,servernode,acts], [id: "client#{x}"]) end)
+        Enum.map(n_list,fn(x) -> Client.start_link(x) end)
+        
+        children = []
+
+        #children = Enum.map(n_list, fn(x)->worker(Client, [x,clients,servernode,acts], [id: "client#{x}"]) end)
+        
         supervise children, strategy: :one_for_one
     end
     def start_workers(sup,numClients,acts,subPercent,servernode) do
