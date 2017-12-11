@@ -47,7 +47,9 @@ defmodule Orc do
             #Process.sleep(1000)
             IO.puts ("Request generation completed, messages getting delivered. Pls wait.")
             #GenServer.cast({:server,servernode},{:all_completed})
-            send List.last(pids),{:time_to_stop, osocketpind}
+            #send List.last(pids),{:time_to_stop, osocketpind}
+            #pid_l = Enum.random (pids)
+            #send pid_l, {:time_to_stop, osocketpind}
             #send osocketpind, :terminate
             #:init.stop
         end

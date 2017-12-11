@@ -56,7 +56,9 @@ defmodule Orcsocket do
     end
 
     def handle_info(:terminate,transport,state) do
-        GenSocketClient.push(transport, "room:sim", "simulator:end", %{paylod: "stop_all"})   
+        GenSocketClient.push(transport, "room:sim", "simulator:end", %{paylod: "stop_all"})
+        Process.sleep(1000)
+        {:ok, state}
     end
     
     def handle_info(message, _transport, state) do

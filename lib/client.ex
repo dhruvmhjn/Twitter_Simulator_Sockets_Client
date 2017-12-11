@@ -146,7 +146,8 @@ defmodule Client do
         IO.puts "RECIEVED TERMINATE"
 
         #send osocketpid, :terminate
-        #:init.stop 
+        #:init.stop
+        {:ok, state} 
     end
 
     def handle_info(message, _transport, state) do
