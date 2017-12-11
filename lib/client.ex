@@ -50,7 +50,7 @@ defmodule Client do
     end
   
     def handle_message(topic, event, payload, _transport, state) do
-      Logger.warn("message on topic #{topic}: #{event} #{inspect payload}")
+      Logger.warn("message on topic #{topic}: #{event} #{inspect payload} by client number #{state.num}"")
       {:ok, state}
     end
   
@@ -79,10 +79,11 @@ defmodule Client do
       {:ok, state}
     end
     def handle_info(:ping_server, transport, state) do
-        if (rem(state.num,2) == 1) do
+        if (state.num == 1) do
             #GenSocketClient.join(transport, "room:trio")
             GenSocketClient.push(transport, "room:trio", "message:new", %{ping_ref: 333})
-        else
+        end
+        if(state.num == 2) do
             #GenSocketClient.join(transport, "room:couple")
             GenSocketClient.push(transport, "room:couple", "message:new", %{ping_ref: 222})
         end
