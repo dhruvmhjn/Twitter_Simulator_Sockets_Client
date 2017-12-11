@@ -9,7 +9,7 @@ defmodule Client do
   
     def init({x,clients,acts,url}) do
         IO.puts url
-        {:noconnect, url, [], %{total: clients, activity: acts, num: x, tweet_cnt: 0, tweets_pool: []}}
+        {:noconnect, url, [], %{total: clients, activity: acts, num: x, tweet_cnt: 0, tweets_pool: [], first_join: true}}
     end
   
     def handle_connected(transport, state) do
@@ -31,7 +31,6 @@ defmodule Client do
              true ->
                 state.activity
          end
-        GenServer.cast(:orc,{:registered})
         {:ok, %{state | tweets_pool: dummy_pool, activity: zipfcount}}
     end
   
@@ -42,14 +41,14 @@ defmodule Client do
     end
   
     def handle_joined(topic, _payload, _transport, state) do
-        Logger.info("joined the topic #{topic}")
-        #   if state.first_join do
-        #     :timer.send_interval(:timer.seconds(10), self(), :ping_server)
-        #     {:ok, %{state | first_join: false, ping_ref: 1}}
-        #   else
-        #     {:ok, %{state | ping_ref: 1}}
-        #   end
-        {:ok, state}
+        Logger.info("joined the topic #{topic}")        
+        if state.first_join do
+            GenServer.cast(:orc,{:registered})
+            #timer.send_interval(:timer.seconds(10), self(), :ping_server)
+            {:ok, %{state | first_join: false}}
+        else
+            {:ok, state}
+        end
     end
   
     def handle_join_error(topic, payload, _transport, state) do

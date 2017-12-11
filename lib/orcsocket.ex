@@ -23,13 +23,14 @@ defmodule Orcsocket do
     end
   
     def handle_joined(topic, _payload, _transport, state) do
-        Logger.info("joined the topic #{topic}")
+        Logger.info("simulator joined the topic #{topic}")
         if state.first_join do
-            :timer.send_interval(:timer.seconds(10), self(), :ping_server)
-            {:ok, %{state | first_join: false, ping_ref: 1}}
+            GenServer.cast(:orc,{:registered})
+            #timer.send_interval(:timer.seconds(10), self(), :ping_server)
+            {:ok, %{state | first_join: false}}
         else
-            {:ok, %{state | ping_ref: 1}}
-      end
+            {:ok, state}
+        end
     end
   
     def handle_join_error(topic, payload, _transport, state) do
@@ -51,6 +52,10 @@ defmodule Orcsocket do
     def handle_reply(topic, _ref, payload, _transport, state) do
         Logger.warn("reply on topic #{topic}: #{inspect payload} by client number #{state.num}")
         {:ok, state}
+    end
+
+    def handle_info(:terminate,transport,state) do
+        GenSocketClient.push(transport, "room:sim", "simulator:end", %{paylod: "stop_all"})   
     end
     
     def handle_info(message, _transport, state) do

@@ -6,51 +6,51 @@ defmodule Orc do
         return
     end
     def init({numClients,acts,subPercent,servernode}) do
-        {:ok,{numClients,acts,subPercent,0,0,servernode,[]}}
+        {:ok,{numClients,acts,subPercent,0,0,servernode,[],""}}
     end
-    def handle_cast({:spawn_completed,list},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,_}) do
+    def handle_cast({:spawn_completed,list},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,_,_}) do
         IO.puts "Registering clients"
-        Orcsocket.start_link(servernode)
+        {:ok, osocketpind} = Orcsocket.start_link(servernode)
         #extract pids
         pids = Enum.map(list, fn(x)-> elem(x,1) end)
-        #IO.inspect pids
         #send connect message
-        Process.sleep(1000)
+
         Enum.map(pids, fn(pid)-> send pid, :connect end)
-        {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids}}
+        {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids,osocketpind}}
     end
 
 
-    def handle_cast({:registered},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,list})do
+    def handle_cast({:registered},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids,osocketpind})do
         numRegistered = numRegistered+1
-        if numRegistered == numClients do
+        if numRegistered == numClients+1 do
             IO.puts "Finished registration."
             GenServer.cast(:orc,{:begin_activate})
          end
-         {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,list}}
+         {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids,osocketpind}}
     end
 
-    def handle_cast({:begin_activate},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,list})do
+    def handle_cast({:begin_activate},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids,osocketpind})do
         #IO.puts "Activating clients, and starting time measurement."
         #rangemax = :math.pow(10,String.length(Integer.to_string(numClients)-2))
         #IO.puts subPercent
         
         n_list = Enum.to_list 1..numClients
         sub_list = Enum.map(1..numClients, fn(_)-> Enum.map(Range.new(1,subPercent), fn(_)-> bais(numClients) end) end)
-        #Enum.map(n_list, fn(x) -> GenServer.cast(String.to_atom("user"<>Integer.to_string(x)),{:activate, Enum.uniq(Enum.at(sub_list,x-1))}) end)
-        Enum.map(n_list, fn(x)-> send Enum.at(list,x-1), {:activate,Enum.uniq(Enum.at(sub_list,x-1))} end)
+        Enum.map(n_list, fn(x)-> send Enum.at(pids,x-1), {:activate,Enum.uniq(Enum.at(sub_list,x-1))} end)
         #start_time = System.system_time(:millisecond)
-        {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,list}}
+        {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids,osocketpind}}
     end
     
-    def handle_cast({:acts_completed},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,list}) do
+    def handle_cast({:acts_completed},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids,osocketpind}) do
         numCompleted= numCompleted + 1
         if(numCompleted == numClients) do
-            Process.sleep(1000)
+            #Process.sleep(1000)
             IO.puts ("Request generation completed, messages getting delivered. Pls wait.")
-            GenServer.cast({:server,servernode},{:all_completed})
+            #GenServer.cast({:server,servernode},{:all_completed})
+            send osocketpind, :terminate
+            :init.stop
         end
-        {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,list}}
+        {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids,osocketpind}}
     end
 
     def bais(numClients) do
