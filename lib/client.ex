@@ -8,6 +8,7 @@ defmodule Client do
     end
   
     def init({x,clients,acts,url}) do
+        IO.puts url
         {:noconnect, url, [], %{total: clients, activity: acts, num: x, tweet_cnt: 0, tweets_pool: []}}
     end
   
@@ -78,7 +79,7 @@ defmodule Client do
     end
   
     def handle_info(:connect, _transport, state) do
-      Logger.info("connecting")
+      Logger.info("Now trying to connecting")
       {:connect, state}
     end
 

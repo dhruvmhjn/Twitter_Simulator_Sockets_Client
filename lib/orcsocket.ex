@@ -12,7 +12,7 @@ defmodule Orcsocket do
     end
   
     def handle_connected(transport, state) do
-            GenSocketClient.join(transport, "room:simulator")
+            GenSocketClient.join(transport, "room:sim")
         {:ok, state}
     end
   

@@ -8,12 +8,12 @@ defmodule Orc do
     def init({numClients,acts,subPercent,servernode}) do
         {:ok,{numClients,acts,subPercent,0,0,servernode,[]}}
     end
-    def handle_cast({:spawn_complete,list},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,_}) do
+    def handle_cast({:spawn_completed,list},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,_}) do
         IO.puts "Registering clients"
         Orcsocket.start_link(servernode)
         #extract pids
         pids = Enum.map(list, fn(x)-> elem(x,1) end)
-        IO.inspect pids
+        #IO.inspect pids
         #send connect message
         Enum.map(pids, fn(pid)-> send pid, :connect end)
         {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids}}
