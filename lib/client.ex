@@ -8,30 +8,47 @@ defmodule Client do
     end
   
     def init({x,clients,acts,url}) do
-        {:connect, url, [], %{first_join: true, ping_ref: 1, num: x}}
+        {:noconnect, url, [], %{total: clients, activity: acts, num: x, tweet_cnt: 0, tweets_pool: []}}
     end
   
     def handle_connected(transport, state) do
         GenSocketClient.join(transport, "room:user"<>Integer.to_string(state.num))
+        
+        dummy_pool = ["160 characters from user #{state.num}.","COP5615 is a good course.","#{state.num}This is a sample tweet.","Random tweet from user.","One more random tweet.", "And one more."]
+        
+        #ZIPF: Randomly start tweeting/retweeting/subscribe/querying activities acc to zipf rank
+        zipfcount = cond do
+             state.num <= (state.total*0.01) ->
+                 state.activity * 20
+                 
+             state.num <= (state.total*0.1) ->
+                state.activity * 10
+             
+             state.num <= (state.total*0.6) ->
+                state.activity * 2
+ 
+             true ->
+                state.activity
+         end
         GenServer.cast(:orc,{:registered})
-        {:ok, state}
+        {:ok, %{state | tweets_pool: dummy_pool, activity: zipfcount}}
     end
   
     def handle_disconnected(reason, state) do
       Logger.error("disconnected: #{inspect reason}")
-      Process.send_after(self(), :connect, :timer.seconds(1))
+      Process.send_after(self(), :connect, :timer.seconds(5))
       {:ok, state}
     end
   
     def handle_joined(topic, _payload, _transport, state) do
-      Logger.info("joined the topic #{topic}")
-  
-      if state.first_join do
-        :timer.send_interval(:timer.seconds(10), self(), :ping_server)
-        {:ok, %{state | first_join: false, ping_ref: 1}}
-      else
-        {:ok, %{state | ping_ref: 1}}
-      end
+        Logger.info("joined the topic #{topic}")
+        #   if state.first_join do
+        #     :timer.send_interval(:timer.seconds(10), self(), :ping_server)
+        #     {:ok, %{state | first_join: false, ping_ref: 1}}
+        #   else
+        #     {:ok, %{state | ping_ref: 1}}
+        #   end
+        {:ok, state}
     end
   
     def handle_join_error(topic, payload, _transport, state) do
@@ -50,10 +67,11 @@ defmodule Client do
       {:ok, state}
     end
   
-    def handle_reply("ping", _ref, %{"status" => "ok"} = payload, _transport, state) do
-      Logger.info("server pong ##{payload}")
-      {:ok, state}
-    end
+    # # def handle_reply("ping", _ref, %{"status" => "ok"} = payload, _transport, state) do
+    # #   Logger.info("server pong ##{payload}")
+    # #   {:ok, state}
+    # end
+
     def handle_reply(topic, _ref, payload, _transport, state) do
       Logger.warn("reply on topic #{topic}: #{inspect payload} by client number #{state.num}")
       {:ok, state}
@@ -63,33 +81,121 @@ defmodule Client do
       Logger.info("connecting")
       {:connect, state}
     end
-    def handle_info({:join, topic}, transport, state) do
-      Logger.info("joining the topic #{topic}")
-      case GenSocketClient.join(transport, topic) do
-        {:error, reason} ->
-          Logger.error("error joining the topic #{topic}: #{inspect reason}")
-          Process.send_after(self(), {:join, topic}, :timer.seconds(1))
-        {:ok, _ref} -> :ok
-      end
-  
-      {:ok, state}
+
+    # def handle_info({:join, topic}, transport, state) do
+    #   Logger.info("joining the topic #{topic}")
+    #   case GenSocketClient.join(transport, topic) do
+    #     {:error, reason} ->
+    #       Logger.error("error joining the topic #{topic}: #{inspect reason}")
+    #       Process.send_after(self(), {:join, topic}, :timer.seconds(1))
+    #     {:ok, _ref} -> :ok
+    #   end
+    #   {:ok, state}
+    # end
+    
+    def handle_info({:activate, subscribe_to}, transport, state) do
+        Enum.map(subscribe_to,fn(x) -> GenSocketClient.join(transport, "room:user"<>Integer.to_string(x)) end )
+        send self(), :pick_random
+        #GenSocketClient.push(transport, "room:trio", "message:new", %{ping_ref: 333})
+        #Logger.info("sending ping ##{state.ping_ref}")
+        #GenSocketClient.push(transport, "room:*", "message:new", %{ping_ref: state.ping_ref})
+        {:ok, state}
     end
-    def handle_info(:ping_server, transport, state) do
-        if (state.num == 1) do
-            #GenSocketClient.join(transport, "room:trio")
-            GenSocketClient.push(transport, "room:trio", "message:new", %{ping_ref: 333})
+
+    # def handle_cast({:activate, subscribe_to},{x,acts,servernode,clients,tweets_pool})do
+    #     #Subcribe to users
+    #     #IO.puts "Client #{x} asked to activated, sub list = #{subscribe_to}"
+    #     GenServer.cast({:server,servernode},{:subscribe,x,subscribe_to})
+    #     #START TWEETING
+    #     GenServer.cast(self(),{:pick_random,1})
+    #     {:noreply,{x,acts,servernode,clients,tweets_pool}}
+    # end
+
+    def handle_info(:pick_random, transport, state) do
+        if(state.tweet_cnt < state.activity) do
+            choice = rem(:rand.uniform(999999),14)
+            case choice do
+                1 ->   
+                    #subscribe(x,servernode,clients)
+                    tweet_hash(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)  
+
+                2 -> 
+                    tweet_mention(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
+
+                # 3 ->
+                #     queryhashtags(x,servernode)
+
+                # 4 ->
+                #     query_self_mentions(x,servernode)
+
+                # 5 ->
+                #     discon(x,servernode)
+                _ ->
+                    tweet(state.num,state.tweets_pool,transport,state.tweet_cnt)
+                    #querytweets(x)
+
+            end
+            Process.sleep (:rand.uniform(100))
+            IO.puts "client #{state.num} act #{state.tweet_cnt}"
+            send self(), :pick_random
+        else
+            IO.puts "User #{state.num} has finised generating at least #{state.activity} activities (Tweets/Queries)."
+            GenServer.cast(:orc, {:acts_completed})
         end
-        if(state.num == 2) do
-            #GenSocketClient.join(transport, "room:couple")
-            GenSocketClient.push(transport, "room:couple", "message:new", %{ping_ref: 222})
-        end
-      Logger.info("sending ping ##{state.ping_ref}")
-      GenSocketClient.push(transport, "room:*", "message:new", %{ping_ref: state.ping_ref})
-      {:ok, %{state | ping_ref: state.ping_ref + 1}}
+        {:ok, %{state | tweet_cnt: state.tweet_cnt + 1}}  
     end
+
+
     def handle_info(message, _transport, state) do
-      Logger.warn("Unhandled message #{inspect message}")
-      {:ok, state}
+        Logger.warn("Unhandled message #{inspect message}")
+        {:ok, state}
     end
-  end
+
+    def tweet(x,tweets_pool,transport,count) do
+        #Generate a message
+        msg = Enum.random(tweets_pool)
+        #GenServer.cast({:server,servernode},{:tweet,x,msg})
+        GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "tweet:new", %{num: x, tweet: msg, tweetcount: count})
+    end
+
+    def tweet_hash(x,tweets_pool,_,transport,count) do
+        #Generate a message
+        msg = Enum.random(tweets_pool) <> " #hashtag" <>Integer.to_string(:rand.uniform(999))
+        #GenServer.cast({:server,servernode},{:tweet,x,msg})
+        GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "tweet:new", %{num: x, tweet: msg, tweetcount: count})
+    end
+
+    def tweet_mention(x,tweets_pool,clients,transport,count) do
+        msg = Enum.random(tweets_pool) <> " @user"<>Integer.to_string(:rand.uniform(clients))
+        #GenServer.cast({:server,servernode},{:tweet,x,msg})
+        GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "tweet:new", %{num: x, tweet: msg, tweetcount: count})
+    end
+
+    # def subscribe(x,servernode,clients) do
+    #     #Pick random user
+    #     follow = :rand.uniform(clients)
+    #     if follow != x do
+    #         GenServer.cast({:server,servernode},{:subscribe,x,[follow]})
+    #     end
+    # end
+    # def queryhashtags(x,servernode) do
+    #     #Pick a random hashtag
+    #     hashtag = "#hashtag" <>Integer.to_string(:rand.uniform(999))
+    #     GenServer.cast({:server,servernode},{:hashtags,x,hashtag})
+    # end
+    # def query_self_mentions(x,servernode) do
+    #     mention = "@user"<>Integer.to_string(x)
+    #     GenServer.cast({:server,servernode},{:mentions,x,mention})
+    # end
+
+    # def discon(x,servernode)do
+    #     #stop all activities, play dead
+    #     #inform server
+    #     time = :rand.uniform(5)*10
+    #     GenServer.cast({:server,servernode},{:disconnection,x})
+    #     Process.sleep(time)
+    #     GenServer.cast({:server,servernode},{:reconnection,x})
+    # end
+
+end
   
