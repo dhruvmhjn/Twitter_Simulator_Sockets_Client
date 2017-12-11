@@ -34,12 +34,12 @@ defmodule Orcsocket do
     end
   
     def handle_join_error(topic, payload, _transport, state) do
-        Logger.error("join error on the topic #{topic}: #{inspect payload}")
+        Logger.warn("join error on the topic #{topic}: #{inspect payload}")
         {:ok, state}
     end
   
     def handle_channel_closed(topic, payload, _transport, state) do
-        Logger.error("disconnected from the topic #{topic}: #{inspect payload}")
+        Logger.warn("disconnected from the topic #{topic}: #{inspect payload}")
         Process.send_after(self(), {:join, topic}, :timer.seconds(1))
         {:ok, state}
     end

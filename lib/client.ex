@@ -105,26 +105,28 @@ defmodule Client do
         if(state.tweet_cnt < state.activity) do
             choice = rem(:rand.uniform(999999),14)
             case choice do
-                1 ->   
-                    #subscribe(x,servernode,clients)
-                    tweet_hash(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)  
+                1 ->
+                    tweet_hash(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
 
-                2 -> 
+                2 ->
                     tweet_mention(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
 
-                # 3 ->
-                #     queryhashtags(x,servernode)
+                3 ->
+                    queryhashtags(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
 
-                # 4 ->
-                #     query_self_mentions(x,servernode)
+                4 ->
+                    query_self_mentions(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
 
-                # 5 ->
-                #     discon(x,servernode)
+                5 ->
+                    discon(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
+
+                6 ->
+                    rand_susbscribe(state.num,state.total,transport)
+
                 _ ->
                     tweet(state.num,state.tweets_pool,transport,state.tweet_cnt)
-                    #querytweets(x)
-
             end
+            
             #Process.sleep (:rand.uniform(200))
             #IO.puts "citsliein #{state.num} act #{state.tweet_cnt}"
             send self(), :pick_random
@@ -135,9 +137,8 @@ defmodule Client do
         {:ok, %{state | tweet_cnt: state.tweet_cnt + 1}}  
     end
 
-
     def handle_info(message, _transport, state) do
-        Logger.warn("Unhandled message #{inspect message}")
+        Logger.warn("Unhandled message: #{inspect message}")
         {:ok, state}
     end
 
@@ -161,13 +162,18 @@ defmodule Client do
         GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "tweet:new", %{num: x, tweet: msg, tweetcount: count})
     end
 
-    # def subscribe(x,servernode,clients) do
-    #     #Pick random user
-    #     follow = :rand.uniform(clients)
-    #     if follow != x do
-    #         GenServer.cast({:server,servernode},{:subscribe,x,[follow]})
-    #     end
-    # end
+    def subscribe(x,clients,transport) do
+        #Pick random user
+        follow = :rand.uniform(clients)
+        if follow != x do
+            case GenSocketClient.join(transport, "room:user"<>Integer.to_string(follow)) do
+                {:error, reason} ->
+                    Logger.error("Can't follow user #{topic}: #{inspect reason}")
+                {:ok, _ref} -> :ok
+            end
+        end
+    end
+
     # def queryhashtags(x,servernode) do
     #     #Pick a random hashtag
     #     hashtag = "#hashtag" <>Integer.to_string(:rand.uniform(999))

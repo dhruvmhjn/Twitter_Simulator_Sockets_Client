@@ -71,28 +71,11 @@ defmodule Orc do
     end
 end
 
-
-    
-
-
-    # def handle_cast({:simulate_disconnection},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,start_time}) do
-    #     client = :rand.uniform(numClients)
-    #     time = :rand.uniform(5)*500
-    #     GenServer.cast(String.to_atom("user"<>Integer.to_string(client)),{:disconnect,time})
-    #     Process.sleep(3000)
-    #     GenServer.cast(self(),{:simulate_disconnection})
-    #     {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,start_time}}
-    # end
-
-
-
-#     def handle_cast({:time},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,start_time}) do
-#         IO.puts "Exiting"
-#         b = System.system_time(:millisecond)
-#         time_taken = b - start_time
-#         send(:global.whereis_name(:client_boss),{:all_requests_served_c,time_taken,numClients,acts,subPercent})
-#         {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,start_time}}
-#     end
-
-    
+# def handle_cast({:simulate_disconnection},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,start_time}) do
+#     client = :rand.uniform(numClients)
+#     time = :rand.uniform(5)*500
+#     GenServer.cast(String.to_atom("user"<>Integer.to_string(client)),{:disconnect,time})
+#     Process.sleep(3000)
+#     GenServer.cast(self(),{:simulate_disconnection})
+#     {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,start_time}}
 # end
