@@ -50,7 +50,7 @@ defmodule Client do
     end
   
     def handle_message(topic, event, payload, _transport, state) do
-      Logger.warn("message on topic #{topic}: #{event} #{inspect payload} by client number #{state.num}"")
+      Logger.warn("message on topic #{topic}: #{event} #{inspect payload} by client number #{state.num}")
       {:ok, state}
     end
   
