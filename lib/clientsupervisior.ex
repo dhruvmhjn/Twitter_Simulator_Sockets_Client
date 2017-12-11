@@ -3,8 +3,6 @@ defmodule ClientSupervisor do
     def start_link([clients,acts,subPercent,servernode]) do
         return = {:ok,sup} = Supervisor.start_link(__MODULE__,{clients,acts,servernode},[])
         list = Supervisor.which_children(sup)
-        IO.puts "In supervisor"
-        IO.inspect list
         start_workers(sup,clients,acts,subPercent,servernode)
         GenServer.cast(:orc,{:spawn_completed,list})        
         return
