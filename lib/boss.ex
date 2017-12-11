@@ -26,10 +26,10 @@ defmodule Boss do
             #IO.puts subPercentInt
             :global.register_name(:client_boss, self())
             ClientSupervisor.start_link([numClientsInt,minActsInt,subPercentInt,serverip]) 
-            end
         end
         boss_receiver()
-    end         
+    end
+
     def boss_receiver() do
         receive do
             {:all_requests_served_s} ->
@@ -53,7 +53,6 @@ defmodule Boss do
                 IO.puts "Approx. activities per second: #{tot/time_taken}"
                 :init.stop                 
          end
-        boss_receiver()
-       
+        boss_receiver()  
     end
 end

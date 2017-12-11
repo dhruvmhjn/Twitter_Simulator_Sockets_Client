@@ -3,12 +3,12 @@ defmodule Orcsocket do
     alias Phoenix.Channels.GenSocketClient
     @behaviour GenSocketClient
 
-    def start_link() do
-        GenSocketClient.start_link(__MODULE__,Phoenix.Channels.GenSocketClient.Transport.WebSocketClient,{x,clients,acts,"ws://"<>servernode<>":4000/socket/websocket"})
+    def start_link(servernode) do
+        GenSocketClient.start_link(__MODULE__,Phoenix.Channels.GenSocketClient.Transport.WebSocketClient,"ws://"<>servernode<>":4000/socket/websocket")
     end
   
-    def init({x,clients,acts,url}) do
-      {:connect, url, [], %{first_join: true, ping_ref: 1, num: x}}
+    def init(url) do
+      {:connect, url, [], %{first_join: true, ping_ref: 1}}
     end
   
     def handle_connected(transport, state) do

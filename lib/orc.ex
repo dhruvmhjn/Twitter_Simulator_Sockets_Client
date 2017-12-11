@@ -10,7 +10,7 @@ defmodule Orc do
     end
     def handle_cast({:spawn_complete,list},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,_}) do
         IO.puts "Registering clients"
-        Orcsocket.start_link()
+        Orcsocket.start_link(servernode)
         {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,list}}
     end
 
