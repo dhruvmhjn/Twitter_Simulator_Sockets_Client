@@ -15,7 +15,7 @@ defmodule Client do
     def handle_connected(transport, state) do
         GenSocketClient.join(transport, "room:user"<>Integer.to_string(state.num))
         
-        dummy_pool = ["160 characters from user #{state.num}.","COP5615 is a good course.","#{state.num}This is a sample tweet.","Random tweet from user.","One more random tweet.", "And one more."]
+        dummy_pool = ["160 characters from user #{state.num}.","COP5615 is a good course.","#{state.num} This is a sample tweet.","Random tweet from user.","One more random tweet.", "And one more."]
         
         #ZIPF: Randomly start tweeting/retweeting/subscribe/querying activities acc to zipf rank
         zipfcount = cond do
@@ -35,13 +35,13 @@ defmodule Client do
     end
   
     def handle_disconnected(reason, state) do
-      Logger.error("disconnected: #{inspect reason}")
+      Logger.warn("disconnected: #{inspect reason}")
       Process.send_after(self(), :connect, :timer.seconds(5))
       {:ok, state}
     end
   
     def handle_joined(topic, _payload, _transport, state) do
-        Logger.info("joined the topic #{topic}")        
+        #Logger.info("joined the topic #{topic}")        
         if state.first_join do
             GenServer.cast(:orc,{:registered})
             #timer.send_interval(:timer.seconds(10), self(), :ping_server)
@@ -52,18 +52,18 @@ defmodule Client do
     end
   
     def handle_join_error(topic, payload, _transport, state) do
-      Logger.error("join error on the topic #{topic}: #{inspect payload}")
+      Logger.warn("join error on the topic #{topic}: #{inspect payload}")
       {:ok, state}
     end
   
     def handle_channel_closed(topic, payload, _transport, state) do
-      Logger.error("disconnected from the topic #{topic}: #{inspect payload}")
+      Logger.warn("disconnected from the topic #{topic}: #{inspect payload}")
       Process.send_after(self(), {:join, topic}, :timer.seconds(1))
       {:ok, state}
     end
   
     def handle_message(topic, event, payload, _transport, state) do
-      Logger.warn("message on topic #{topic}: #{event} #{inspect payload} by client number #{state.num}")
+      #Logger.warn("message on topic #{topic}: #{event} #{inspect payload} by client number #{state.num}")
       {:ok, state}
     end
   
@@ -78,9 +78,11 @@ defmodule Client do
     end
   
     def handle_info(:connect, _transport, state) do
-      Logger.info("Now trying to connecting")
+      #Logger.info("Now trying to connecting")
       {:connect, state}
     end
+
+    #For EXTERNAL SUBSCRIBE
 
     # def handle_info({:join, topic}, transport, state) do
     #   Logger.info("joining the topic #{topic}")
@@ -96,20 +98,8 @@ defmodule Client do
     def handle_info({:activate, subscribe_to}, transport, state) do
         Enum.map(subscribe_to,fn(x) -> GenSocketClient.join(transport, "room:user"<>Integer.to_string(x)) end )
         send self(), :pick_random
-        #GenSocketClient.push(transport, "room:trio", "message:new", %{ping_ref: 333})
-        #Logger.info("sending ping ##{state.ping_ref}")
-        #GenSocketClient.push(transport, "room:*", "message:new", %{ping_ref: state.ping_ref})
         {:ok, state}
     end
-
-    # def handle_cast({:activate, subscribe_to},{x,acts,servernode,clients,tweets_pool})do
-    #     #Subcribe to users
-    #     #IO.puts "Client #{x} asked to activated, sub list = #{subscribe_to}"
-    #     GenServer.cast({:server,servernode},{:subscribe,x,subscribe_to})
-    #     #START TWEETING
-    #     GenServer.cast(self(),{:pick_random,1})
-    #     {:noreply,{x,acts,servernode,clients,tweets_pool}}
-    # end
 
     def handle_info(:pick_random, transport, state) do
         if(state.tweet_cnt < state.activity) do
@@ -135,8 +125,8 @@ defmodule Client do
                     #querytweets(x)
 
             end
-            Process.sleep (:rand.uniform(500))
-            IO.puts "client #{state.num} act #{state.tweet_cnt}"
+            #Process.sleep (:rand.uniform(200))
+            #IO.puts "citsliein #{state.num} act #{state.tweet_cnt}"
             send self(), :pick_random
         else
             IO.puts "User #{state.num} has finised generating at least #{state.activity} activities (Tweets/Queries)."
