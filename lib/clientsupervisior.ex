@@ -2,18 +2,14 @@ defmodule ClientSupervisor do
     use Supervisor
     def start_link([clients,acts,subPercent,servernode]) do
         return = {:ok,sup} = Supervisor.start_link(__MODULE__,{clients,acts,servernode},[])
+        list = which_children(self)
         start_workers(sup,clients,acts,subPercent,servernode)
-        GenServer.cast(:orc,{:spawn_complete})
+        GenServer.cast(:orc,{:spawn_completed,list})        
         return
     end
     def init({clients,acts,servernode}) do
         n_list = Enum.to_list 1..clients
-        Enum.map(n_list,fn(x) -> Client.start_link(x) end)
-        
-        children = []
-
-        #children = Enum.map(n_list, fn(x)->worker(Client, [x,clients,servernode,acts], [id: "client#{x}"]) end)
-        
+        children = Enum.map(n_list, fn(x)->worker(Client, [x,clients,servernode,acts], [id: "client#{x}"]) end)
         supervise children, strategy: :one_for_one
     end
     def start_workers(sup,numClients,acts,subPercent,servernode) do

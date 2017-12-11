@@ -4,58 +4,56 @@ defmodule Boss do
     end
     defp parse_args(args) do
         cmdarg = OptionParser.parse(args)
-        {[],[numClients,timePeriod,role],[]} = cmdarg
-        numClientsInt = String.to_integer(numClients)
-        timePeriodInt = String.to_integer(timePeriod)
-        if role == "server" do
-            #dd
+
+        {[],argstr,[]} = cmdarg
+        sregex = ~r/^server/
+
+        if Regex.match?(sregex,Enum.at(argstr,0)) do
+            #Server Twitter Engine
         else
-
-            # snode=String.to_atom("clientnode@"<>ipofsnode)
-            # IO.puts snode
-            # Node.start snode
-            # Node.set_cookie :dmahajan
+            #Client Simulators
+            [numClients,minActs,serverip]=argstr
+            numClientsInt = String.to_integer(numClients)
+            minActsInt = String.to_integer(minActs)
+            subPercentInt= cond do
+                numClientsInt >= 10000 ->
+                    100
+                numClientsInt >= 100 ->
+                    10
+                true ->
+                    1 
+            end
+            #IO.puts subPercentInt
             :global.register_name(:client_boss, self())
-           
-            # servernode = String.to_atom("servernode@"<>role)
-            # IO.inspect servernode
-            # abc = Node.connect(servernode)
-            # IO.puts "THOS IS ABC"
-            # IO.inspect abc
-            # IO.inspect Node.list
-            # IO.puts "pinging"
-            # IO.inspect Node.ping(servernode)
-            # IO.inspect Node.list
-            :global.sync()
-            ClientSupervisor.start_link([numClientsInt,timePeriodInt,33,"ddd"]) 
+            ClientSupervisor.start_link([numClientsInt,minActsInt,subPercentInt,serverip]) 
+            end
         end
-        boss_receiver(numClientsInt,timePeriodInt)
-    end
-            
-    def boss_receiver(numClients,timePeriod) do
+        boss_receiver()
+    end         
+    def boss_receiver() do
         receive do
-            
-        #     {:nodes_created} ->
-                
-        #         IO.puts "Pastry network init started. Waiting for nodes to join..."
-        #         nextnode = "n"<>Base.encode16(:crypto.hash(:md5, Integer.to_string(1) ) )
-        #         # ADD INIT NEXT cast here 
-        #         GenServer.cast(String.to_atom(nextnode),{:intialize_table_first})
-
-        #     {:network_ring_created} ->
-        #         IO.puts "Pastry network created. Routing messages..."
-        #         n_list = Enum.to_list 1..numNodes
-        #         nodeid_list = Enum.map(n_list, fn(x) -> "n"<>Base.encode16(:crypto.hash(:md5, Integer.to_string(x) ) ) end)
-               
-        #         Enum.map(nodeid_list, fn(x) -> GenServer.cast(String.to_atom(x),{:create_n_requests}) end)
-
-             {:all_requests_served,b} ->
-                 #avg = b/(numNodes*numRequests)
-                 IO.puts "Total Hops: #{b}"
-                #  IO.puts "Average Hops: #{avg}"
-                 :init.stop                
+            {:all_requests_served_s} ->
+                IO.puts "All requests served, engine terminating. Check simulator console for summary stats."
+                :init.stop
+            {:all_requests_served_c,time_taken,clients,acts,subPercent} ->
+                time_taken = time_taken/1000
+                IO.puts "All requests served, simulation terminating."
+                IO.puts "Summary Statics"
+                IO.puts "Total time (Seconds): #{time_taken}"
+                IO.puts "Number of requests generated and served."
+                IO.puts "   Minimum activities : #{acts}"
+                IO.puts "   Top 1% of the clients do at least 20 times the minumum activities."
+                IO.puts "   Next 9% of the clients do at least 10 times the minumum activities."
+                IO.puts "   Next 50% of the clients do at least 2 times the minumum activities."
+                IO.puts "   Rest 40% of the clients do at least the minumum activities."
+                IO.puts "Total activities, approx = #{acts*20} * #{clients*0.01} + #{acts*10} * #{clients*0.09} + #{acts*2} * #{clients*0.5} + #{acts} * #{clients*0.4}"
+                tot = (acts*20 * clients*0.01) + (acts* 10 * clients*0.09) + (acts*2 * clients*0.5) + (acts * clients*0.4)
+                IO.puts "Approx total: #{round(tot)}"
+                #time_taken = time_taken/1000
+                IO.puts "Approx. activities per second: #{tot/time_taken}"
+                :init.stop                 
          end
-        boss_receiver(numClients,timePeriod)
+        boss_receiver()
        
     end
 end

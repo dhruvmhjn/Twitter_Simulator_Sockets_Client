@@ -2,22 +2,18 @@ defmodule Client do
     require Logger
     alias Phoenix.Channels.GenSocketClient
     @behaviour GenSocketClient
-  
-    def start_link(x) do
-        GenSocketClient.start_link(__MODULE__,Phoenix.Channels.GenSocketClient.Transport.WebSocketClient,{x,"ws://192.168.0.5:4000/socket/websocket"})
+
+    def start_link(x,clients,servernode,acts) do
+        GenSocketClient.start_link(__MODULE__,Phoenix.Channels.GenSocketClient.Transport.WebSocketClient,{x,clients,acts,"ws://"<>servernode<>":4000/socket/websocket"})
     end
   
-    def init({x,url}) do
-      {:connect, url, [], %{first_join: true, ping_ref: 1, num: x}}
+    def init({x,clients,acts,url}) do
+        {:connect, url, [], %{first_join: true, ping_ref: 1, num: x}}
     end
   
     def handle_connected(transport, state) do
-        Logger.info("connected")
-        if (rem(state.num,2) == 1) do
-            GenSocketClient.join(transport, "room:trio")
-        else
-            GenSocketClient.join(transport, "room:couple")
-        end
+        GenSocketClient.join(transport, "room:user"<>Integer.to_string(state.num))
+        GenServer.cast(:orc,{:registered})
         {:ok, state}
     end
   
