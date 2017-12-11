@@ -8,6 +8,7 @@ defmodule Orcsocket do
     end
   
     def init(url) do
+        IO.puts "In init"
       {:connect, url, [], %{first_join: true, ping_ref: 1}}
     end
   

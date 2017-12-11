@@ -10,6 +10,9 @@ defmodule Client do
     def init({x,clients,acts,url}) do
         IO.puts url
         IO.puts "IN INIT"
+        IO.puts x
+        IO.puts clients
+        IO.puts acts
         {:noconnect, url, [], %{total: clients, activity: acts, num: x, tweet_cnt: 0, tweets_pool: [], first_join: true}}
     end
   
