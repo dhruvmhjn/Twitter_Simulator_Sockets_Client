@@ -142,8 +142,9 @@ defmodule Client do
         {:ok, %{state | tweet_cnt: state.tweet_cnt + 1}}  
     end
 
-    def handle_info({:terminate, osocketpid}, transport, state) do
+    def handle_info({:time_to_stop, osocketpid}, transport, state) do
         IO.puts "RECIEVED TERMINATE"
+
         #send osocketpid, :terminate
         #:init.stop 
     end
