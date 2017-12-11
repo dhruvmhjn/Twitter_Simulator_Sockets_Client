@@ -11,7 +11,12 @@ defmodule Orc do
     def handle_cast({:spawn_complete,list},{numClients,acts,subPercent,numRegistered,numCompleted,servernode,_}) do
         IO.puts "Registering clients"
         Orcsocket.start_link(servernode)
-        {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,list}}
+        #extract pids
+        pids = Enum.map(list, fn(x)-> elem(x,1) end)
+        IO.inspect pids
+        #send connect message
+        Enum.map(pids, fn(pid)-> send pid, :connect end)
+        {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,pids}}
     end
 
 
@@ -31,7 +36,8 @@ defmodule Orc do
         
         n_list = Enum.to_list 1..numClients
         sub_list = Enum.map(1..numClients, fn(_)-> Enum.map(Range.new(1,subPercent), fn(_)-> bais(numClients) end) end)
-        Enum.map(n_list, fn(x) -> GenServer.cast(String.to_atom("user"<>Integer.to_string(x)),{:activate, Enum.uniq(Enum.at(sub_list,x-1))}) end)
+        #Enum.map(n_list, fn(x) -> GenServer.cast(String.to_atom("user"<>Integer.to_string(x)),{:activate, Enum.uniq(Enum.at(sub_list,x-1))}) end)
+        Enum.map(n_list, fn(x)-> send Enum.at(list,x-1), {:activate,Enum.uniq(Enum.at(sub_list,x-1))} end)
         #start_time = System.system_time(:millisecond)
         {:noreply,{numClients,acts,subPercent,numRegistered,numCompleted,servernode,list}}
     end
