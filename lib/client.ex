@@ -9,6 +9,7 @@ defmodule Client do
   
     def init({x,clients,acts,url}) do
         IO.puts url
+        IO.puts "IN INIT"
         {:noconnect, url, [], %{total: clients, activity: acts, num: x, tweet_cnt: 0, tweets_pool: [], first_join: true}}
     end
   
@@ -36,7 +37,7 @@ defmodule Client do
   
     def handle_disconnected(reason, state) do
       Logger.warn("disconnected: #{inspect reason}")
-      Process.send_after(self(), :connect, :timer.seconds(5))
+      #Process.send_after(self(), :connect, :timer.seconds(5))
       {:ok, state}
     end
   
@@ -52,13 +53,13 @@ defmodule Client do
     end
   
     def handle_join_error(topic, payload, _transport, state) do
-      Logger.warn("join error on the topic #{topic}: #{inspect payload}")
+      Logger.warn("join error on the stopic #{topic}: #{inspect payload}")
       {:ok, state}
     end
   
     def handle_channel_closed(topic, payload, _transport, state) do
       Logger.warn("disconnected from the topic #{topic}: #{inspect payload}")
-      Process.send_after(self(), {:join, topic}, :timer.seconds(1))
+      #Process.send_after(self(), {:join, topic}, :timer.seconds(1))
       {:ok, state}
     end
   
@@ -75,7 +76,7 @@ defmodule Client do
     # end
 
     def handle_reply(topic, _ref, payload, _transport, state) do
-      Logger.warn("reply on topic #{topic}: #{inspect payload} by client number #{state.num}")
+      #Logger.warn("reply on topic #{topic}: #{inspect payload} by client number #{state.num}")
       {:ok, state}
     end
   
@@ -121,9 +122,8 @@ defmodule Client do
 
                 # 5 ->
                 #     discon(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
-
                 6 ->
-                    rand_susbscribe(state.num,state.total,transport)
+                    rand_subscribe(state.num,state.total,transport)
 
                 _ ->
                     tweet(state.num,state.tweets_pool,transport,state.tweet_cnt)
@@ -137,6 +137,12 @@ defmodule Client do
             GenServer.cast(:orc, {:acts_completed})
         end
         {:ok, %{state | tweet_cnt: state.tweet_cnt + 1}}  
+    end
+
+    def handle_info({:terminate, osocketpid}, transport, state) do
+        IO.puts "RECIEVED TERMINATE"
+        #send osocketpid, :terminate
+        #:init.stop 
     end
 
     def handle_info(message, _transport, state) do
@@ -164,13 +170,13 @@ defmodule Client do
         GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "tweet:new", %{num: x, tweet: msg, tweetcount: count})
     end
 
-    def subscribe(x,clients,transport) do
+    def rand_subscribe(x,clients,transport) do
         #Pick random user
         follow = :rand.uniform(clients)
         if follow != x do
             case GenSocketClient.join(transport, "room:user"<>Integer.to_string(follow)) do
                 {:error, reason} ->
-                    Logger.error("Can't follow user #{topic}: #{inspect reason}")
+                    Logger.error("Can't follow user room:user"<>Integer.to_string(follow)<> ": #{inspect reason}")
                 {:ok, _ref} -> :ok
             end
         end

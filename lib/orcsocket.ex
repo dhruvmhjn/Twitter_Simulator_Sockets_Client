@@ -18,7 +18,7 @@ defmodule Orcsocket do
   
     def handle_disconnected(reason, state) do
         #Logger.error("disconnected: #{inspect reason}")
-        Process.send_after(self(), :connect, :timer.seconds(1))
+        #Process.send_after(self(), :connect, :timer.seconds(1))
         {:ok, state}
     end
   
@@ -40,7 +40,7 @@ defmodule Orcsocket do
   
     def handle_channel_closed(topic, payload, _transport, state) do
         Logger.warn("disconnected from the topic #{topic}: #{inspect payload}")
-        Process.send_after(self(), {:join, topic}, :timer.seconds(1))
+        #Process.send_after(self(), {:join, topic}, :timer.seconds(1))
         {:ok, state}
     end
   
