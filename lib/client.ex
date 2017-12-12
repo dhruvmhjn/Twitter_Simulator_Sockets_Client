@@ -122,7 +122,7 @@ defmodule Client do
                     tweet(state.num,state.tweets_pool,transport,state.tweet_cnt)
             end
             
-            #Process.sleep (:rand.uniform(200))
+            Process.sleep (:rand.uniform(200))
             #IO.puts "citsliein #{state.num} act #{state.tweet_cnt}"
             send self(), :pick_random
         else
