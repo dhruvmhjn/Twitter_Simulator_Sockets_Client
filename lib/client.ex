@@ -34,7 +34,7 @@ defmodule Client do
     end
   
     def handle_disconnected(reason, state) do
-      Logger.warn("disconnected: #{inspect reason}")
+      Logger.warn("Disconnected: #{inspect reason}")
       {:ok, state}
     end
   
@@ -58,7 +58,7 @@ defmodule Client do
     end
   
     def handle_channel_closed(topic, payload, _transport, state) do
-      Logger.warn("disconnected from the topic #{topic}: #{inspect payload}")
+      Logger.warn("Disconnected from the topic #{topic}: #{inspect payload}")
       #Process.send_after(self(), {:join, topic}, :timer.seconds(1))
       {:ok, state}
     end
@@ -139,13 +139,11 @@ defmodule Client do
     end
 
     def tweet(x,tweets_pool,transport,count) do
-        #Generate a message
         msg = Enum.random(tweets_pool)
         GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "tweet:new", %{num: x, tweet: msg, tweetcount: count})
     end
 
     def tweet_hash(x,tweets_pool,_,transport,count) do
-        #Generate a message
         msg = Enum.random(tweets_pool) <> " #hashtag" <>Integer.to_string(:rand.uniform(999))
         GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "tweet:new", %{num: x, tweet: msg, tweetcount: count})
     end
