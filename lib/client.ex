@@ -55,14 +55,18 @@ defmodule Client do
         end
     end
 
-    def handle_join_error(topic, {:already_joined}, _transport, state) do
-        Logger.warn("IGNORE #{topic}: #{inspect payload}")
+    def handle_join_error(topic, :already_joined, _transport, state) do
+        Logger.warn("IGNORE")
         {:ok, state}
     end
   
     def handle_join_error(topic, payload, _transport, state) do
-      Logger.warn("join error on the stopic #{topic}: #{inspect payload}")
-      {:ok, state}
+        if (payload == :already_joined) do
+        #nothing 
+        else
+            Logger.warn("join error on the stopic #{topic}: #{inspect payload}")            
+        end
+        {:ok, state}
     end
   
     def handle_channel_closed(topic, payload, _transport, state) do
