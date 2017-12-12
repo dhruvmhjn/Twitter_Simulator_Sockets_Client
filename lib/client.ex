@@ -39,11 +39,9 @@ defmodule Client do
       {:ok, state}
     end
   
-    def handle_joined(topic, _payload, _transport, state) do
-        #Logger.info("joined the topic #{topic}")        
+    def handle_joined(topic, _payload, _transport, state) do      
         if state.first_join do
             GenServer.cast(:orc,{:registered})
-            #timer.send_interval(:timer.seconds(10), self(), :ping_server)
             {:ok, %{state | first_join: false}}
         else
             {:ok, state}
@@ -51,7 +49,7 @@ defmodule Client do
     end
   
     def handle_join_error(topic, payload, _transport, state) do
-        IO.inspect(payload)
+        #IO.inspect(payload)
         if (payload == ":already_joined") do
         #nothing 
         else
@@ -70,19 +68,16 @@ defmodule Client do
         msg = payload["tweet"]
         src = payload["source"]
         if (:rand.uniform(999) == 99) do
-            #IO.puts "RE TWEETING"
             rt_msg = if (Regex.match?(~r/^RT, Source:/ , msg)) do
                 msg
             else
                 "RT, Source: user#{src} Tweet: " <>msg
             end
-            #IO.puts "Retweeting: "<>rt_msg
-            #GenServer.cast({:server,servernode},{:tweet,x,rt_msg})
             GenSocketClient.push(transport, "room:user"<>Integer.to_string(state.num), "tweet:new", %{num: state.num, tweet: rt_msg, tweetcount: state.tweet_cnt})
-        end 
-      #Logger.warn("message on topic #{topic}: #{event} #{inspect payload} by client number #{state.num}")
+        end
       {:ok, %{state | tweet_cnt: state.tweet_cnt + 1}} 
     end
+
     def handle_reply(topic, _ref, payload, _transport, state) do
       #Logger.warn("reply on topic #{topic}: #{inspect payload} by client number #{state.num}")
       {:ok, state}
@@ -134,7 +129,6 @@ defmodule Client do
 
     def handle_info({:time_to_stop, osocketpid}, transport, state) do
         #IO.puts "RECIEVED TERMINATE"
-
         #send osocketpid, :terminate
         #:init.stop
         {:ok, state} 
