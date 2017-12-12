@@ -82,14 +82,6 @@ defmodule Client do
       #Logger.warn("message on topic #{topic}: #{event} #{inspect payload} by client number #{state.num}")
       {:ok, %{state | tweet_cnt: state.tweet_cnt + 1}} 
     end
-
-    # FOR EXTERNAL REPLIES< DO SEPCIFIC THINGS
-
-    # # def handle_reply("ping", _ref, %{"status" => "ok"} = payload, _transport, state) do
-    # #   Logger.info("server pong ##{payload}")
-    # #   {:ok, state}
-    # end
-
     def handle_reply(topic, _ref, payload, _transport, state) do
       #Logger.warn("reply on topic #{topic}: #{inspect payload} by client number #{state.num}")
       {:ok, state}
@@ -100,19 +92,6 @@ defmodule Client do
       {:connect, state}
     end
 
-    #For EXTERNAL SUBSCRIBE
-
-    # def handle_info({:join, topic}, transport, state) do
-    #   Logger.info("joining the topic #{topic}")
-    #   case GenSocketClient.join(transport, topic) do
-    #     {:error, reason} ->
-    #       Logger.error("error joining the topic #{topic}: #{inspect reason}")
-    #       Process.send_after(self(), {:join, topic}, :timer.seconds(1))
-    #     {:ok, _ref} -> :ok
-    #   end
-    #   {:ok, state}
-    # end
-    
     def handle_info({:activate, subscribe_to}, transport, state) do
         Enum.map(subscribe_to,fn(x) -> GenSocketClient.join(transport, "room:user"<>Integer.to_string(x)) end )
         send self(), :pick_random
