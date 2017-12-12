@@ -115,8 +115,6 @@ defmodule Client do
                 4 ->
                     query_self_mentions(state.num,transport)
 
-                # 5 ->
-                #     discon(state.num,state.tweets_pool,state.total,transport,state.tweet_cnt)
                 6 ->
                     rand_subscribe(state.num,state.total,transport)
 
@@ -150,20 +148,17 @@ defmodule Client do
     def tweet(x,tweets_pool,transport,count) do
         #Generate a message
         msg = Enum.random(tweets_pool)
-        #GenServer.cast({:server,servernode},{:tweet,x,msg})
         GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "tweet:new", %{num: x, tweet: msg, tweetcount: count})
     end
 
     def tweet_hash(x,tweets_pool,_,transport,count) do
         #Generate a message
         msg = Enum.random(tweets_pool) <> " #hashtag" <>Integer.to_string(:rand.uniform(999))
-        #GenServer.cast({:server,servernode},{:tweet,x,msg})
         GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "tweet:new", %{num: x, tweet: msg, tweetcount: count})
     end
 
     def tweet_mention(x,tweets_pool,clients,transport,count) do
         msg = Enum.random(tweets_pool) <> " @user"<>Integer.to_string(:rand.uniform(clients))
-        #GenServer.cast({:server,servernode},{:tweet,x,msg})
         GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "tweet:new", %{num: x, tweet: msg, tweetcount: count})
     end
 
@@ -183,23 +178,11 @@ defmodule Client do
         #Pick a random hashtag
         hashtag = "#hashtag" <>Integer.to_string(:rand.uniform(999))
         GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "query:hashtag", %{num: x, hashtag: hashtag})
-        #GenServer.cast({:server,servernode},{:hashtags,x,hashtag})
     end
     
     def query_self_mentions(x,transport) do
         mention = "@user"<>Integer.to_string(x)
         GenSocketClient.push(transport, "room:user"<>Integer.to_string(x), "query:mentions", %{num: x, mention: mention})        
-        #GenServer.cast({:server,servernode},{:mentions,x,mention})
     end
-
-    # def discon(x,servernode)do
-    #     #stop all activities, play dead
-    #     #inform server
-    #     time = :rand.uniform(5)*10
-    #     GenServer.cast({:server,servernode},{:disconnection,x})
-    #     Process.sleep(time)
-    #     GenServer.cast({:server,servernode},{:reconnection,x})
-    # end
-
 end
   
