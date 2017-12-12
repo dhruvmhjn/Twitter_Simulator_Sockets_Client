@@ -192,7 +192,7 @@ defmodule Client do
         follow = :rand.uniform(clients)
         if follow != x do
             case GenSocketClient.join(transport, "room:user"<>Integer.to_string(follow)) do
-                {:error, reason} ->
+                {:error, reason} -> :ok
                     #Logger.error("Can't follow user room:user"<>Integer.to_string(follow)<> ": #{inspect reason}")
                 {:ok, _ref} -> :ok
             end
