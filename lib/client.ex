@@ -35,7 +35,6 @@ defmodule Client do
   
     def handle_disconnected(reason, state) do
       Logger.warn("disconnected: #{inspect reason}")
-      #Process.send_after(self(), :connect, :timer.seconds(5))
       {:ok, state}
     end
   
