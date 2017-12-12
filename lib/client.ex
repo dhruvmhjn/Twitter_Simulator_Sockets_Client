@@ -56,7 +56,7 @@ defmodule Client do
     end
 
     def handle_join_error(topic, :already_joined, _transport, state) do
-        Logger.warn("join error on the stopic #{topic}: #{inspect payload}")
+        Logger.warn("IGNORE #{topic}: #{inspect payload}")
         {:ok, state}
     end
   
