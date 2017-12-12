@@ -70,7 +70,7 @@ defmodule Client do
             rt_msg = if (Regex.match?(~r/^ReTweet, Src:/ , msg)) do
                 msg
             else
-                "RT, Source: user#{src} Tweet: " <>msg
+                "ReTweet, Src: user#{src} Tweet: " <>msg
             end
             GenSocketClient.push(transport, "room:user"<>Integer.to_string(state.num), "tweet:new", %{num: state.num, tweet: rt_msg, tweetcount: state.tweet_cnt})
         end
