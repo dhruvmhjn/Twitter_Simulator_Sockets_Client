@@ -71,9 +71,21 @@ defmodule Client do
       {:ok, state}
     end
   
-    def handle_message(topic, event, payload, _transport, state) do
+    def handle_message(topic, event, payload, transport, state) do
+        msg = payload["tweet"]
+        src = payload["source"]
+        if (:rand.uniform(999) == 99) do
+            rt_msg = if (Regex.match?(~r/^RT, Source:/ , msg)) do
+                msg
+            else
+                "RT, Source: user#{src} Tweet: " <>msg
+            end
+            #IO.puts "Retweeting: "<>rt_msg
+            #GenServer.cast({:server,servernode},{:tweet,x,rt_msg})
+            GenSocketClient.push(transport, "room:user"<>Integer.to_string(state.num), "tweet:new", %{num: x, tweet: rt_msg, tweetcount: state.tweet_cnt})
+        end 
       #Logger.warn("message on topic #{topic}: #{event} #{inspect payload} by client number #{state.num}")
-      {:ok, state}
+      {:ok, %{state | tweet_cnt: state.tweet_cnt + 1}} 
     end
 
     # FOR EXTERNAL REPLIES< DO SEPCIFIC THINGS
