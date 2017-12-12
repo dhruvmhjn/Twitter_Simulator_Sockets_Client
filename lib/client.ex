@@ -66,8 +66,8 @@ defmodule Client do
     def handle_message(topic, event, payload, transport, state) do
         msg = payload["tweet"]
         src = payload["source"]
-        if (:rand.uniform(999) == 99) do
-            rt_msg = if (Regex.match?(~r/^RT, Source:/ , msg)) do
+        if (:rand.uniform(200) == 99) do
+            rt_msg = if (Regex.match?(~r/^ReTweet, Src:/ , msg)) do
                 msg
             else
                 "RT, Source: user#{src} Tweet: " <>msg
