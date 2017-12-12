@@ -70,6 +70,7 @@ defmodule Client do
         msg = payload["tweet"]
         src = payload["source"]
         if (:rand.uniform(999) == 99) do
+            #IO.puts "RE TWEETING"
             rt_msg = if (Regex.match?(~r/^RT, Source:/ , msg)) do
                 msg
             else

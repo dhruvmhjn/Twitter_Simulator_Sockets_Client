@@ -8,7 +8,7 @@ defmodule Orcsocket do
     end
   
     def init(url) do
-        IO.puts "In init"
+        #IO.puts "In init"
       {:connect, url, [], %{first_join: true, ping_ref: 1}}
     end
   
@@ -24,7 +24,7 @@ defmodule Orcsocket do
     end
   
     def handle_joined(topic, _payload, _transport, state) do
-        Logger.info("simulator joined the topic #{topic}")
+        IO.puts ("simulator regitered #{topic}")
         if state.first_join do
             GenServer.cast(:orc,{:registered})
             #timer.send_interval(:timer.seconds(10), self(), :ping_server)
