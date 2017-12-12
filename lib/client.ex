@@ -8,11 +8,6 @@ defmodule Client do
     end
   
     def init({x,clients,acts,url}) do
-        IO.puts url
-        IO.puts "IN INIT"
-        IO.puts x
-        IO.puts clients
-        IO.puts acts
         {:noconnect, url, [], %{total: clients, activity: acts, num: x, tweet_cnt: 0, tweets_pool: [], first_join: true}}
     end
   
@@ -61,7 +56,8 @@ defmodule Client do
     end
   
     def handle_join_error(topic, payload, _transport, state) do
-        if (payload == :already_joined) do
+        IO.inspect(payload)
+        if (payload == ":already_joined") do
         #nothing 
         else
             Logger.warn("join error on the stopic #{topic}: #{inspect payload}")            
@@ -152,7 +148,7 @@ defmodule Client do
     end
 
     def handle_info({:time_to_stop, osocketpid}, transport, state) do
-        IO.puts "RECIEVED TERMINATE"
+        #IO.puts "RECIEVED TERMINATE"
 
         #send osocketpid, :terminate
         #:init.stop
