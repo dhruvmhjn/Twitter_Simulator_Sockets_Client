@@ -49,18 +49,13 @@ defmodule Client do
             {:ok, state}
         end
     end
-
-    def handle_join_error(topic, :already_joined, _transport, state) do
-        Logger.warn("IGNORE")
-        {:ok, state}
-    end
   
     def handle_join_error(topic, payload, _transport, state) do
         IO.inspect(payload)
         if (payload == ":already_joined") do
         #nothing 
         else
-            Logger.warn("join error on the stopic #{topic}: #{inspect payload}")            
+            #Logger.warn("join error on the stopic #{topic}: #{inspect payload}")            
         end
         {:ok, state}
     end
@@ -82,7 +77,7 @@ defmodule Client do
             end
             #IO.puts "Retweeting: "<>rt_msg
             #GenServer.cast({:server,servernode},{:tweet,x,rt_msg})
-            GenSocketClient.push(transport, "room:user"<>Integer.to_string(state.num), "tweet:new", %{num: x, tweet: rt_msg, tweetcount: state.tweet_cnt})
+            GenSocketClient.push(transport, "room:user"<>Integer.to_string(state.num), "tweet:new", %{num: state.num, tweet: rt_msg, tweetcount: state.tweet_cnt})
         end 
       #Logger.warn("message on topic #{topic}: #{event} #{inspect payload} by client number #{state.num}")
       {:ok, %{state | tweet_cnt: state.tweet_cnt + 1}} 
@@ -198,7 +193,7 @@ defmodule Client do
         if follow != x do
             case GenSocketClient.join(transport, "room:user"<>Integer.to_string(follow)) do
                 {:error, reason} ->
-                    Logger.error("Can't follow user room:user"<>Integer.to_string(follow)<> ": #{inspect reason}")
+                    #Logger.error("Can't follow user room:user"<>Integer.to_string(follow)<> ": #{inspect reason}")
                 {:ok, _ref} -> :ok
             end
         end
